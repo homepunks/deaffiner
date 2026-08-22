@@ -1,3 +1,5 @@
+use num_modular::ModularUnaryOps;
+
 pub const ALPHABET_SIZE: u8 = 26;
 const M: u32 = ALPHABET_SIZE as u32;
 
@@ -31,4 +33,15 @@ pub fn decrypt(src: &[u8], a_inv: u8, b: u8) -> anyhow::Result<Vec<u8>> {
     }
 
     Ok(plain_bytes)
+}
+
+pub fn brute_force(src: &[u8], a_inv: u8, b: u8) -> anyhow::Result<Vec<Vec<u8>>> {
+    let results = Vec::new(); 
+
+
+    Ok(results)
+}
+
+fn affine_keys() -> impl Iterator<Item = (u8, u8)> {
+    (1..M).filter_map(|a| a.invm(&M)).flat_map(|a_inv| (0..M).map(move |b| (a_inv as u8 , b as u8)))
 }
