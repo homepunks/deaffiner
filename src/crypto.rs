@@ -1,47 +1,39 @@
-use num_modular::ModularUnaryOps;
+use num_modular::{ModularCoreOps, ModularUnaryOps};
 
 pub const ALPHABET_SIZE: u8 = 26;
-const M: u16 = ALPHABET_SIZE as u16;
+
+fn affine_map(src: &[u8], mul: u8, add: u8) -> Vec<u8> {
+    const M: u16 = ALPHABET_SIZE as u16;
+    src.iter()
+        .map(|&c| {
+            if !c.is_ascii_alphabetic() {
+                return c;
+            }
+            let base = if c.is_ascii_uppercase() { b'A' } else { b'a' };
+            let x = u16::from(c - base);
+            let y = (u16::from(mul) * x + u16::from(add)) % M;
+            y as u8 + base
+        })
+        .collect()
+}
 
 pub fn encrypt(src: &[u8], a: u8, b: u8) -> Vec<u8> {
-    let mut cipher_bytes = Vec::new();
-    for &c in src {
-        if !c.is_ascii_alphabetic() {
-            cipher_bytes.push(c);
-            continue;
-        }
-        let base = if c.is_ascii_uppercase() { b'A' } else { b'a' };
-        let x = u16::from(c - base);
-        let enc = ((u16::from(a) * x + u16::from(b)) % M) as u8;
-        cipher_bytes.push(enc + base);
-    }
-
-    cipher_bytes
+    affine_map(src, a, b)
 }
 
 pub fn decrypt(src: &[u8], a_inv: u8, b: u8) -> Vec<u8> {
-    let mut plain_bytes = Vec::new();
-    for &c in src {
-        if !c.is_ascii_alphabetic() {
-            plain_bytes.push(c);
-            continue;
-        }
-        let base = if c.is_ascii_uppercase() { b'A' } else { b'a' };
-        let x = u16::from(c - base);
-        let dec = (u16::from(a_inv) * ((x + M - u16::from(b) % M) % M) % M) as u8;
-        plain_bytes.push(dec + base);
-    }
-
-    plain_bytes
+    let add = a_inv.mulm(b, &ALPHABET_SIZE).negm(&ALPHABET_SIZE);
+    affine_map(src, a_inv, add)
 }
 
-pub fn brute_force(src: &[u8], a_inv: u8, b: u8) -> anyhow::Result<Vec<Vec<u8>>> {
-    let results = Vec::new(); 
-
-
-    Ok(results)
+pub fn brute_force(src: &[u8]) -> Vec<(u8, u8, Vec<u8>)> {
+    affine_keys()
+        .map(|(a_inv, b)| (a_inv, b, decrypt(src, a_inv, b)))
+        .collect()
 }
 
 fn affine_keys() -> impl Iterator<Item = (u8, u8)> {
-    (1..M).filter_map(|a| a.invm(&M)).flat_map(|a_inv| (0..M).map(move |b| (a_inv as u8 , b as u8)))
+    (1..ALPHABET_SIZE)
+        .filter_map(|a| a.invm(&ALPHABET_SIZE))
+        .flat_map(|a_inv| (0..ALPHABET_SIZE).map(move |b| (a_inv, b)))
 }
