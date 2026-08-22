@@ -13,4 +13,11 @@ name = "deaffiner"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "num-modular",
 ]
+
+[[package]]
+name = "num-modular"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd8e500409e6cd603b03e477c26a6caecdc27ac58979a53e881c75eafc079f44"
