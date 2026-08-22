@@ -1,7 +1,7 @@
 use std::fs;
 use std::str;
 
-const ALPHABET_SIZE: u8 = 26;
+const ALPHABET_SIZE: u32 = 26;
 
 fn main() -> anyhow::Result<()> {
     let data_file = "data/The_Open_Window.txt";
@@ -15,25 +15,17 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn encrypt(src: &[u8], a: u8, b: u8) -> anyhow::Result<Vec<u8>, anyhow::Error> {
+fn encrypt(src: &[u8], a: u8, b: u8) -> anyhow::Result<Vec<u8>> {
     let mut cipher_bytes = Vec::new();
-    for c in src {
+    for &c in src {
         if !c.is_ascii_alphabetic() {
-            cipher_bytes.push(*c);
+            cipher_bytes.push(c);
             continue;
         }
-
-
-        let c = {
-            if c.is_ascii_uppercase() {
-                let c = c.wrapping_mul(a).wrapping_add(b).rem_euclid(ALPHABET_SIZE);
-                c + b'A'
-            } else { 
-                let c = c.wrapping_mul(a).wrapping_add(b).rem_euclid(ALPHABET_SIZE);
-                c + b'a'
-            }
-        };
-        cipher_bytes.push(c);
+        let base = if c.is_ascii_uppercase() { b'A' } else { b'a' };
+        let x = c - base;
+        let enc = ((u32::from(a) * u32::from(x) + u32::from(b)) % ALPHABET_SIZE) as u8;
+        cipher_bytes.push(enc + base);
     }
 
     Ok(cipher_bytes)
