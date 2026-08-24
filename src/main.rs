@@ -1,20 +1,26 @@
-use deaffiner::crypto::{ALPHABET_SIZE, decrypt, encrypt};
 use num_modular::ModularUnaryOps;
 use std::fs;
+use deaffiner::crypto::{encrypt, brute_force, ALPHABET_SIZE};
+use deaffiner::scoring::{load_dictionary, score_english};
 
 fn main() -> anyhow::Result<()> {
     let data_file = "data/The_Open_Window.txt";
     let data_bytes = fs::read(data_file)?;
+    let dict = load_dictionary()?;
 
-    let a = 7;
-    let b = 25;
+    let (a, b) = (7, 25);
     let cipher_bytes = encrypt(&data_bytes, a, b);
-    if let Some(a_inv) = a.invm(&ALPHABET_SIZE) {
-        let plain_bytes = decrypt(&cipher_bytes, a_inv, b);
-        assert_eq!(plain_bytes, data_bytes);
-        println!("ROUND TRIP SUCCEEDED");
-    } else {
-        println!("ROUND TRIP FAILED");
+
+    let best = brute_force(&cipher_bytes)
+        .into_iter()
+        .max_by_key(|(_, _, sample)| score_english(sample, &dict));
+
+    match best {
+        Some((a_inv_key, b_key, _)) => {
+            println!("a_inv: {a_inv_key} (expected {:?})", a.invm(&ALPHABET_SIZE).unwrap());
+            println!("b:     {b_key} (expected {b})");
+        },
+        None => println!("no candidates"),
     }
 
     Ok(())
