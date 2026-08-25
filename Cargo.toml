@@ -1,8 +1,9 @@
 [package]
 name = "deaffiner"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 
 [dependencies]
 anyhow = "1.0.104"
+clap = { version = "4.6.6", features = ["derive"] }
 num-modular = "0.6.5"
