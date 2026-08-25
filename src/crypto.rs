@@ -21,7 +21,8 @@ pub fn encrypt(src: &[u8], a: u8, b: u8) -> Vec<u8> {
     affine_map(src, a, b)
 }
 
-pub fn decrypt(src: &[u8], a_inv: u8, b: u8) -> Vec<u8> {
+pub fn decrypt(src: &[u8], a: u8, b: u8) -> Vec<u8> {
+    let a_inv = a.invm(&ALPHABET_SIZE).expect("a must be coprime with 26");
     let add = a_inv.mulm(b, &ALPHABET_SIZE).negm(&ALPHABET_SIZE);
     affine_map(src, a_inv, add)
 }
@@ -34,6 +35,6 @@ pub fn brute_force(src: &[u8]) -> Vec<(u8, u8, Vec<u8>)> {
 
 fn affine_keys() -> impl Iterator<Item = (u8, u8)> {
     (1..ALPHABET_SIZE)
-        .filter_map(|a| a.invm(&ALPHABET_SIZE))
-        .flat_map(|a_inv| (0..ALPHABET_SIZE).map(move |b| (a_inv, b)))
+        .filter(|a| a.invm(&ALPHABET_SIZE).is_some())
+        .flat_map(|a| (0..ALPHABET_SIZE).map(move |b| (a, b)))
 }
