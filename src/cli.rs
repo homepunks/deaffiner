@@ -68,7 +68,11 @@ pub fn process_cli(cli: Cli) -> anyhow::Result<()> {
             let out = decrypt(&data, a, b);
             println!("{}", String::from_utf8_lossy(&out));
         }
-        Command::Crack { file, corpus, verbose } => {
+        Command::Crack {
+            file,
+            corpus,
+            verbose,
+        } => {
             let data = fs::read(&file)?;
             let dict = load_dictionary(&corpus)?;
 
