@@ -49,6 +49,10 @@ pub enum Command {
         /// corpus data dir for cryptanalysis
         #[arg(long, default_value = "data/corpus")]
         corpus: path::PathBuf,
+
+        /// verbose cryptanalysis output
+        #[arg(short, long)]
+        verbose: bool,
     },
 }
 
@@ -64,16 +68,27 @@ pub fn process_cli(cli: Cli) -> anyhow::Result<()> {
             let out = decrypt(&data, a, b);
             println!("{}", String::from_utf8_lossy(&out));
         }
-        Command::Crack { file, corpus } => {
+        Command::Crack { file, corpus, verbose } => {
             let data = fs::read(&file)?;
             let dict = load_dictionary(&corpus)?;
-            let best = brute_force(&data)
-                .into_iter()
-                .max_by_key(|(_, _, sample)| score_english(sample, &dict));
+
+            let mut best: Option<(usize, u8, u8)> = None;
+            for (a, b, plain) in brute_force(&data) {
+                let score = score_english(&plain, &dict);
+
+                if verbose {
+                    println!("trying a={a:2} b={b:2} :: score = {score}");
+                }
+
+                if best.is_none_or(|(top, ..)| score > top) {
+                    best = Some((score, a, b));
+                }
+            }
 
             match best {
-                Some((a, b, _)) => {
-                    println!("a: {a}, b: {b}");
+                Some((score, a, b)) => {
+                    println!("+++++++++++++++++++++++++++++");
+                    println!("a: {a}, b: {b} (score {score})");
                 }
                 None => println!("no candidates"),
             }
